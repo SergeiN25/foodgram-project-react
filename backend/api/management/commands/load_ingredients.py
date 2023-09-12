@@ -3,7 +3,6 @@ import os
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from django.db.utils import IntegrityError
 
 from api.models import Ingredient
 
@@ -19,18 +18,19 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            with open(os.path.join(DATA_ROOT, options['filename']), 'r',
-                      encoding='utf-8') as f:
+            with open(
+                os.path.join(DATA_ROOT, options['filename']),
+                'r',
+                encoding='utf-8'
+            ) as f:
                 data = json.load(f)
                 for ingredient in data:
-                    try:
-                        Ingredient.objects.create(name=ingredient["name"],
-                                                  measurement_unit=ingredient[
-                                                      "measurement_unit"])
-                    except IntegrityError:
-                        print(f'Ингридиет {ingredient["name"]} '
-                              f'{ingredient["measurement_unit"]} '
-                              f'уже есть в базе')
-
+                    obj, created = Ingredient.objects.get_or_create(
+                        name=ingredient["name"],
+                        measurement_unit=ingredient["measurement_unit"]
+                    )
+                    if not created:
+                        print(
+                            f'Ингридиент {ingredient["name"]} уже есть в базе')
         except FileNotFoundError:
             raise CommandError('Файл отсутствует в директории data')

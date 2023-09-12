@@ -42,23 +42,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    @action(detail=True, methods=['get', 'delete'],
-            permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
-        if request.method == 'GET':
-            return self.add_obj(Favorite, request.user, pk)
-        if request.method == 'DELETE':
-            return self.delete_obj(Favorite, request.user, pk)
-        return None
+        return self.add_obj(Favorite, request.user, pk)
 
-    @action(detail=True, methods=['get', 'delete'],
-            permission_classes=[IsAuthenticated])
+    @favorite.mapping.delete
+    def delete_favorite(self, request, pk=None):
+        return self.delete_obj(Favorite, request.user, pk)
+
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
-        if request.method == 'GET':
-            return self.add_obj(Cart, request.user, pk)
-        if request.method == 'DELETE':
-            return self.delete_obj(Cart, request.user, pk)
-        return None
+        return self.add_obj(Cart, request.user, pk)
+
+    @shopping_cart.mapping.delete
+    def delete_shopping_cart(self, request, pk=None):
+        return self.delete_obj(Cart, request.user, pk)
 
     @action(detail=False, methods=['get'],
             permission_classes=[IsAuthenticated])

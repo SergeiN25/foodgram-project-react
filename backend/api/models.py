@@ -1,8 +1,11 @@
-from django.contrib.auth import get_user_model
+# from django.contrib.auth import get_user_model
 from django.core import validators
 from django.db import models
 
-User = get_user_model()
+from django.core.validators import RegexValidator
+from users.models import User
+
+# User = get_user_model()
 
 
 class Ingredient(models.Model):
@@ -12,7 +15,7 @@ class Ingredient(models.Model):
                                         verbose_name='Единица измерения')
 
     class Meta:
-        ordering = ['-id']
+        ordering = ('-id',)
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
         constraints = [
@@ -24,23 +27,20 @@ class Ingredient(models.Model):
         return self.name
 
 
-class Tag(models.Model):
-    BLUE = '#0000FF'
-    ORANGE = '#FFA500'
-    GREEN = '#008000'
-    PURPLE = '#800080'
-    YELLOW = '#FFFF00'
+HEX_COLOR_LENGTH = 7
 
-    COLOR_CHOICES = [
-        (BLUE, 'Синий'),
-        (ORANGE, 'Оранжевый'),
-        (GREEN, 'Зеленый'),
-        (PURPLE, 'Фиолетовый'),
-        (YELLOW, 'Желтый'),
-    ]
+
+hex_color_validator = RegexValidator(
+    regex=f'^#{r"[0-9a-fA-F]{6}"}$',
+    message='Введите цвет в формате HEX, например, "#RRGGBB"',
+)
+
+
+class Tag(models.Model):
     name = models.CharField(max_length=200, unique=True,
                             verbose_name='Название тега')
-    color = models.CharField(max_length=7, unique=True, choices=COLOR_CHOICES,
+    color = models.CharField(max_length=HEX_COLOR_LENGTH,
+                             validators=[hex_color_validator],
                              verbose_name='Цвет в HEX')
     slug = models.SlugField(max_length=200, unique=True,
                             verbose_name='Уникальный слаг')
@@ -74,9 +74,14 @@ class Recipe(models.Model):
         verbose_name='Теги',
     )
     cooking_time = models.PositiveSmallIntegerField(
-        validators=(
+        validators=[
             validators.MinValueValidator(
-                1, message='Минимальное время приготовления 1 минута'),),
+                1, message='Минимальное время приготовления 1 минута'
+            ),
+            validators.MaxValueValidator(
+                1440, message='Максимальное время приготовления 24 часа'
+            ),
+        ],
         verbose_name='Время приготовления')
 
     class Meta:
@@ -97,9 +102,15 @@ class IngredientAmount(models.Model):
         verbose_name='Рецепт',
     )
     amount = models.PositiveSmallIntegerField(
-        validators=(
+        validators=[
             validators.MinValueValidator(
-                1, message='Минимальное количество ингридиентов 1'),),
+                1, message='Минимальное количество ингридиентов 1'
+            ),
+            validators.MaxValueValidator(
+                100, message='Максимальное количество ингридиентов 100'
+            ),
+        ],
+
         verbose_name='Количество',
     )
 

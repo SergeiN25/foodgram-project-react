@@ -1,10 +1,11 @@
-from django.contrib.auth import get_user_model
+# from django.contrib.auth import get_user_model
 from django_filters.rest_framework import FilterSet, filters
 from rest_framework.filters import SearchFilter
 
 from api.models import Recipe
+from users.models import User
 
-User = get_user_model()
+# User = get_user_model()
 
 
 class IngredientSearchFilter(SearchFilter):

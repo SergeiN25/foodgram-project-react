@@ -37,6 +37,12 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
             )
         ]
 
+        def validate_amount(self, value):
+            if value < 0:
+                raise serializers.ValidationError(
+                    'Убедитесь, что значение количества ингредиента больше 0')
+            return value
+
 
 class RecipeSerializer(serializers.ModelSerializer):
     image = Base64ImageField()
@@ -58,15 +64,12 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def get_is_favorited(self, obj):
         user = self.context.get('request').user
-        if user.is_anonymous:
-            return False
-        return Recipe.objects.filter(favorites__user=user, id=obj.id).exists()
+        return (
+            user.is_authenticated and obj.favorites.filter(user=user).exists())
 
     def get_is_in_shopping_cart(self, obj):
         user = self.context.get('request').user
-        if user.is_anonymous:
-            return False
-        return Recipe.objects.filter(cart__user=user, id=obj.id).exists()
+        return user.is_authenticated and obj.cart.filter(user=user).exists()
 
     def validate(self, data):
         ingredients = self.initial_data.get('ingredients')
@@ -77,25 +80,27 @@ class RecipeSerializer(serializers.ModelSerializer):
         for ingredient_item in ingredients:
             ingredient = get_object_or_404(Ingredient,
                                            id=ingredient_item['id'])
-            if ingredient in ingredient_list:
-                raise serializers.ValidationError('Ингридиенты должны '
-                                                  'быть уникальными')
+            if len(ingredient_list) != len(set(ingredient_list)):
+                raise serializers.ValidationError(
+                    'Ингредиенты должны быть уникальными')
+
             ingredient_list.append(ingredient)
-            if int(ingredient_item['amount']) < 0:
-                raise serializers.ValidationError({
-                    'ingredients': ('Убедитесь, что значение количества '
-                                    'ингредиента больше 0')
-                })
+
         data['ingredients'] = ingredients
         return data
 
     def create_ingredients(self, ingredients, recipe):
+        ingredient_amounts = []
+
         for ingredient in ingredients:
-            IngredientAmount.objects.create(
+            ingredient_amount = IngredientAmount(
                 recipe=recipe,
                 ingredient_id=ingredient.get('id'),
                 amount=ingredient.get('amount'),
             )
+            ingredient_amounts.append(ingredient_amount)
+
+        IngredientAmount.objects.bulk_create(ingredient_amounts)
 
     def create(self, validated_data):
         image = validated_data.pop('image')
@@ -107,18 +112,18 @@ class RecipeSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        instance.image = validated_data.get('image', instance.image)
-        instance.name = validated_data.get('name', instance.name)
-        instance.text = validated_data.get('text', instance.text)
+        instance = super().update(instance, validated_data)
         instance.cooking_time = validated_data.get(
             'cooking_time', instance.cooking_time
         )
         instance.tags.clear()
         tags_data = self.initial_data.get('tags')
         instance.tags.set(tags_data)
-        IngredientAmount.objects.filter(recipe=instance).all().delete()
+
+        instance.ingredients.clear()
         self.create_ingredients(validated_data.get('ingredients'), instance)
         instance.save()
+
         return instance
 
 
@@ -161,3 +166,17 @@ class FollowSerializer(serializers.ModelSerializer):
 
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj.author).count()
+
+    def validate(self, data):
+        user = self.context['request'].user
+        author = data['author']
+
+        if user == author:
+            raise serializers.ValidationError(
+                'Вы не можете подписываться на самого себя')
+
+        if Follow.objects.filter(user=user, author=author).exists():
+            raise serializers.ValidationError(
+                'Вы уже подписаны на данного пользователя')
+
+        return data
