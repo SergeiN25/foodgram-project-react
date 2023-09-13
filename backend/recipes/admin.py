@@ -1,6 +1,7 @@
-from django.contrib import admin, models
+from django.contrib import admin
 
-from .models import Cart, Favorite, Ingredient, Recipe, Tag
+from recipes.models import (
+    Cart, Favorite, Ingredient, Recipe, Tag, RecipeIngredient)
 
 
 class TagAdmin(admin.ModelAdmin):
@@ -12,14 +13,10 @@ class IngredientAdmin(admin.ModelAdmin):
     list_filter = ('name',)
 
 
-class RecipeIngredient(models.Model):
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    quantity = models.DecimalField(max_digits=6, decimal_places=2)
-
-
 class RecipeIngredientInline(admin.TabularInline):
     model = RecipeIngredient
+    extra = 1
+    min_num = 1
 
 
 class RecipeAdmin(admin.ModelAdmin):

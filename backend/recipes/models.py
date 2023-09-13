@@ -1,11 +1,8 @@
-# from django.contrib.auth import get_user_model
 from django.core import validators
 from django.db import models
 
 from django.core.validators import RegexValidator
 from users.models import User
-
-# User = get_user_model()
 
 
 class Ingredient(models.Model):
@@ -46,7 +43,7 @@ class Tag(models.Model):
                             verbose_name='Уникальный слаг')
 
     class Meta:
-        ordering = ['-id']
+        ordering = ('-id',)
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
 
@@ -85,7 +82,7 @@ class Recipe(models.Model):
         verbose_name='Время приготовления')
 
     class Meta:
-        ordering = ['-id']
+        ordering = ('-id',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
 
@@ -107,7 +104,7 @@ class IngredientAmount(models.Model):
                 1, message='Минимальное количество ингридиентов 1'
             ),
             validators.MaxValueValidator(
-                100, message='Максимальное количество ингридиентов 100'
+                500, message='Максимальное количество ингридиентов 500'
             ),
         ],
 
@@ -115,7 +112,7 @@ class IngredientAmount(models.Model):
     )
 
     class Meta:
-        ordering = ['-id']
+        ordering = ('-id',)
         verbose_name = 'Количество ингридиента'
         verbose_name_plural = 'Количество ингридиентов'
         constraints = [
@@ -138,7 +135,7 @@ class Favorite(models.Model):
     )
 
     class Meta:
-        ordering = ['-id']
+        ordering = ('-id',)
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранные'
         constraints = [
@@ -162,10 +159,16 @@ class Cart(models.Model):
     )
 
     class Meta:
-        ordering = ['-id']
+        ordering = ('-id',)
         verbose_name = 'Корзина'
         verbose_name_plural = 'В корзине'
         constraints = [
             models.UniqueConstraint(fields=['user', 'recipe'],
                                     name='unique cart user')
         ]
+
+
+class RecipeIngredient(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    quantity = models.DecimalField(max_digits=6, decimal_places=2)

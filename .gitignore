@@ -137,4 +137,7 @@ media/
 media_value/
 static_value/
 
+.vscode/
 .vscode
+vscode/
+vscode
