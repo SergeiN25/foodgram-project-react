@@ -8,7 +8,7 @@ class UserAdmin(BaseUserAdmin):
     list_display = (
         'email', 'first_name', 'last_name',
         'is_staff', 'recipe_count', 'follower_count')
-    list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups')
+    list_filter = ('is_staff', 'is_superuser', 'is_active')
 
     def recipe_count(self, obj):
         return obj.recipes.count()
