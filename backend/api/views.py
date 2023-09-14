@@ -1,14 +1,6 @@
-from api.filters import AuthorAndTagFilter, IngredientSearchFilter
-from api.pagination import LimitPageNumberPagination
-from api.permissions import IsOwnerOrReadOnly
-from api.serializers import (CropRecipeSerializer, FollowSerializer,
-                             IngredientSerializer, RecipeSerializer,
-                             TagSerializer)
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
-from recipes.models import (Cart, Favorite, Ingredient, IngredientAmount,
-                            Recipe, Tag)
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
@@ -17,6 +9,15 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
+
+from api.filters import AuthorAndTagFilter, IngredientSearchFilter
+from api.pagination import LimitPageNumberPagination
+from api.permissions import IsOwnerOrReadOnly
+from api.serializers import (CropRecipeSerializer, FollowSerializer,
+                             IngredientSerializer, RecipeSerializer,
+                             TagSerializer)
+from recipes.models import (Cart, Favorite, Ingredient, IngredientAmount,
+                            Recipe, Tag)
 from users.models import Follow, User
 
 
@@ -106,8 +107,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete_obj(self, model, user, pk):
-        obj = get_object_or_404(model, user=user, recipe__id=pk)
-        obj.delete()
+        get_object_or_404(model, user=user, recipe_id=pk).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -130,8 +130,7 @@ class CustomUserViewSet(UserViewSet):
     @subscribe.mapping.delete
     def delete_subscribe(self, request, id=None):
         user = request.user
-        author = get_object_or_404(User, id=id)
-        Follow.objects.filter(user=user, author=author).delete()
+        get_object_or_404(Follow, user=user, author_id=id).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, permission_classes=[IsAuthenticated])

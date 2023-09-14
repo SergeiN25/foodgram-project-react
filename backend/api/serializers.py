@@ -1,9 +1,10 @@
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
-from recipes.models import Ingredient, IngredientAmount, Recipe, Tag
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator, UniqueValidator
+
+from recipes.models import Ingredient, IngredientAmount, Recipe, Tag
 from users.models import Follow, User
 
 
@@ -195,7 +196,7 @@ class FollowSerializer(serializers.ModelSerializer):
         return CropRecipeSerializer(queryset, many=True).data
 
     def get_recipes_count(self, obj):
-        return Recipe.objects.filter(author=obj.author).count()
+        return obj.author.recipes.count()
 
     def validate(self, data):
         user = self.context['request'].user

@@ -1,6 +1,7 @@
 from django.contrib import admin
-from recipes.models import (Cart, Favorite, Ingredient, Recipe,
-                            RecipeIngredient, Tag)
+
+from recipes.models import (Cart, Favorite, Ingredient, IngredientAmount,
+                            Recipe, Tag)
 
 
 class TagAdmin(admin.ModelAdmin):
@@ -13,7 +14,7 @@ class IngredientAdmin(admin.ModelAdmin):
 
 
 class RecipeIngredientInline(admin.TabularInline):
-    model = RecipeIngredient
+    model = IngredientAmount
     extra = 1
     min_num = 1
 

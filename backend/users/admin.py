@@ -1,11 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from users.forms import EmailAuthenticationForm
+
 from users.models import Follow, User
 
 
 class UserAdmin(BaseUserAdmin):
-    form = EmailAuthenticationForm
     list_display = (
         'email', 'first_name', 'last_name',
         'is_staff', 'recipe_count', 'follower_count')

@@ -1,6 +1,6 @@
 from django.core import validators
-from django.core.validators import RegexValidator
 from django.db import models
+
 from users.models import User
 
 
@@ -16,7 +16,7 @@ class Ingredient(models.Model):
         verbose_name_plural = 'Ингредиенты'
         constraints = [
             models.UniqueConstraint(fields=['name', 'measurement_unit'],
-                                    name='unique ingredient')
+                                    name='unique_ingredient')
         ]
 
     def __str__(self):
@@ -26,7 +26,7 @@ class Ingredient(models.Model):
 HEX_COLOR_LENGTH = 7
 
 
-hex_color_validator = RegexValidator(
+hex_color_validator = validators.RegexValidator(
     regex=f'^#{r"[0-9a-fA-F]{6}"}$',
     message='Введите цвет в формате HEX, например, "#RRGGBB"',
 )
@@ -103,7 +103,7 @@ class IngredientAmount(models.Model):
                 1, message='Минимальное количество ингридиентов 1'
             ),
             validators.MaxValueValidator(
-                500, message='Максимальное количество ингридиентов 500'
+                1000000, message='Максимальное количество ингридиентов 1000000'
             ),
         ],
 
@@ -116,7 +116,7 @@ class IngredientAmount(models.Model):
         verbose_name_plural = 'Количество ингридиентов'
         constraints = [
             models.UniqueConstraint(fields=['ingredient', 'recipe'],
-                                    name='unique ingredients recipe')
+                                    name='unique_ingredients_recipe')
         ]
 
 
@@ -139,7 +139,7 @@ class Favorite(models.Model):
         verbose_name_plural = 'Избранные'
         constraints = [
             models.UniqueConstraint(fields=['user', 'recipe'],
-                                    name='unique favorite recipe for user')
+                                    name='unique_favorite_recipe_for_user')
         ]
 
 
@@ -163,11 +163,5 @@ class Cart(models.Model):
         verbose_name_plural = 'В корзине'
         constraints = [
             models.UniqueConstraint(fields=['user', 'recipe'],
-                                    name='unique cart user')
+                                    name='unique_cart_user')
         ]
-
-
-class RecipeIngredient(models.Model):
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    quantity = models.DecimalField(max_digits=6, decimal_places=2)

@@ -17,6 +17,8 @@ class User(AbstractUser):
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
 
+    USERNAME_FIELD = email
+
 
 class Follow(models.Model):
     user = models.ForeignKey(
@@ -39,7 +41,7 @@ class Follow(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'author'],
-                name='unique follow',
+                name='unique_follow',
             ),
             models.CheckConstraint(
                 check=~models.Q(user=models.F('author')),
