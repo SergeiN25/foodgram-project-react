@@ -13,9 +13,8 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from api.filters import AuthorAndTagFilter, IngredientSearchFilter
 from api.pagination import LimitPageNumberPagination
 from api.permissions import IsOwnerOrReadOnly
-from api.serializers import (CropRecipeSerializer, FollowSerializer,
-                             IngredientSerializer, RecipeSerializer,
-                             TagSerializer)
+from api.serializers import (FollowSerializer, IngredientSerializer,
+                             RecipeSerializer, TagSerializer)
 from recipes.models import (Cart, Favorite, Ingredient, IngredientAmount,
                             Recipe, Tag)
 from users.models import Follow, User
@@ -102,9 +101,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 'errors': 'Рецепт уже добавлен в список'
             }, status=status.HTTP_400_BAD_REQUEST)
         recipe = get_object_or_404(Recipe, id=pk)
-        model.objects.create(user=user, recipe=recipe)
-        serializer = CropRecipeSerializer(recipe)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serializer = RecipeSerializer(
+            data={'user': user.id, 'recipe': recipe.id})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete_obj(self, model, user, pk):
         get_object_or_404(model, user=user, recipe_id=pk).delete()
