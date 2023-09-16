@@ -3,6 +3,7 @@ from django.db import models
 
 
 class User(AbstractUser):
+    """Модель пользователя"""
 
     email = models.EmailField(
         verbose_name='Email',
