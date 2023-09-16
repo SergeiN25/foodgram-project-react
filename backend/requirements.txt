@@ -8,12 +8,12 @@ coreapi==2.3.3
 coreschema==0.0.4
 cryptography==3.4.8
 defusedxml==0.7.1
-Django==3.0.5
-django-cors-headers==3.9.0
+Django==3.2.3
+django-cors-headers==3.13.0
 django-extra-fields==3.0.2
 django-filter==21.1
 django-templated-mail==1.1.1
-djangorestframework==3.11.0
+djangorestframework==3.12.4
 djangorestframework-simplejwt==4.8.0
 djoser==2.1.0
 flake8==6.1.0
@@ -25,8 +25,8 @@ MarkupSafe==2.0.1
 mccabe==0.7.0
 oauthlib==3.1.1
 Pillow==8.3.2
-psycopg2==2.9.7
-psycopg2-binary==2.9.7
+psycopg2==2.9.3
+psycopg2-binary==2.9.3
 pycodestyle==2.11.0
 pycparser==2.20
 pyflakes==3.1.0
