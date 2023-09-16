@@ -103,11 +103,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = get_object_or_404(Recipe, id=pk)
         serializer = RecipeSerializer(
             data={'user': user.id, 'recipe': recipe.id})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(
-            serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete_obj(self, model, user, pk):
         get_object_or_404(model, user=user, recipe_id=pk).delete()

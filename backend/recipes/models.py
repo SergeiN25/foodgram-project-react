@@ -103,7 +103,7 @@ class IngredientAmount(models.Model):
                 1, message='Минимальное количество ингридиентов 1'
             ),
             validators.MaxValueValidator(
-                1000000, message='Максимальное количество ингридиентов 1000000'
+                30000, message='Максимальное количество ингридиентов 30000'
             ),
         ],
 
