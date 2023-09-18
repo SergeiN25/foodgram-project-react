@@ -1,3 +1,4 @@
+from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
@@ -63,22 +64,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'],
             permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
-        final_list = {}
-        ingredients = IngredientAmount.objects.filter(
-            recipe__cart__user=request.user).values_list(
-            'ingredient__name', 'ingredient__measurement_unit',
-            'amount')
-        for item in ingredients:
-            name = item[0]
-            if name not in final_list:
-                final_list[name] = {
-                    'measurement_unit': item[1],
-                    'amount': item[2]
-                }
-            else:
-                final_list[name]['amount'] += item[2]
-        pdfmetrics.registerFont(
-            TTFont('Slimamif', 'Slimamif.ttf', 'UTF-8'))
+        ingredients = (
+            IngredientAmount.objects
+            .filter(recipe__cart__user=request.user)
+            .values('ingredient__name', 'ingredient__measurement_unit')
+            .annotate(amount_sum=Sum('amount'))
+        )
+        pdfmetrics.registerFont(TTFont('Slimamif', 'Slimamif.ttf', 'UTF-8'))
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = ('attachment; '
                                            'filename="shopping_list.pdf"')
@@ -87,19 +79,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
         page.drawString(200, 800, 'Список ингредиентов')
         page.setFont('Slimamif', size=16)
         height = 750
-        for i, (name, data) in enumerate(final_list.items(), 1):
-            page.drawString(75, height, (f'<{i}> {name} - {data["amount"]}, '
-                                         f'{data["measurement_unit"]}'))
+        for i, data in enumerate(ingredients, 1):
+            name = data['ingredient__name']
+            measurement_unit = data['ingredient__measurement_unit']
+            amount = data['amount_sum']
+            page.drawString(
+                75, height, f'<{i}> {name} - {amount}, {measurement_unit}')
             height -= 25
+
         page.showPage()
         page.save()
         return response
 
     def add_obj(self, model, user, pk):
-        if model.objects.filter(user=user, recipe__id=pk).exists():
-            return Response({
-                'errors': 'Рецепт уже добавлен в список'
-            }, status=status.HTTP_400_BAD_REQUEST)
         recipe = get_object_or_404(Recipe, id=pk)
         serializer = RecipeSerializer(
             data={'user': user.id, 'recipe': recipe.id})
@@ -117,11 +109,10 @@ class CustomUserViewSet(UserViewSet):
 
     @action(detail=True, permission_classes=[IsAuthenticated])
     def subscribe(self, request, id=None):
-        user = request.user
         author = get_object_or_404(User, id=id)
 
         serializer = FollowSerializer(
-            data={'user': user.id, 'author': author.id})
+            data={'user': request.user.id, 'author': author.id})
         serializer.is_valid(raise_exception=True)
         follow = serializer.save()
         return Response(FollowSerializer(
@@ -130,14 +121,12 @@ class CustomUserViewSet(UserViewSet):
 
     @subscribe.mapping.delete
     def delete_subscribe(self, request, id=None):
-        user = request.user
-        get_object_or_404(Follow, user=user, author_id=id).delete()
+        get_object_or_404(Follow, user=request.user, author_id=id).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, permission_classes=[IsAuthenticated])
     def subscriptions(self, request):
-        user = request.user
-        queryset = Follow.objects.filter(user=user)
+        queryset = request.user.following.all()
         pages = self.paginate_queryset(queryset)
         serializer = FollowSerializer(
             pages,
