@@ -47,7 +47,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/foodgram-project:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_backend:latest
 
       - name: Push frontend to Docker Hub
         uses: docker/build-push-action@v4
@@ -61,17 +61,27 @@ jobs:
     needs: build_and_push_to_docker_hub
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
     steps:
-      - name: executing remote ssh commands to deploy
-        uses: appleboy/ssh-action@master
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Copy docker-compose.yml via ssh
+        uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
+          source: "docker-compose.yml"
+          target: "foodgram"
+      - name: Executing remote ssh commands to deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
             cd foodgram
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/foodgram_frontend
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/foodgram-project
+            sudo docker compose -f docker-compose.yml pull
             sudo docker-compose down
             rm .env
             touch .env
@@ -83,10 +93,6 @@ jobs:
             echo DB_PORT=${{ secrets.DB_PORT }} >> .env
             echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
             sudo docker-compose up -d
-            sudo docker compose -f docker-compose.yml exec backend python manage.py migrate
-            sudo docker compose -f docker-compose.yml exec backend python manage.py collectstatic
-            sudo docker compose -f docker-compose.yml exec backend cp -r /app/collected_static/. /backend_static/static/
-            sudo docker-compose exec backend python manage.py load_ingredients ingredients.json
 
   telegram_message:
     name: Send telegram message

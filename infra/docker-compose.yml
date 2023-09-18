@@ -17,7 +17,7 @@ services:
 
 
   backend:
-    image: alphasn/foodgram-project
+    image: alphasn/foodgram_backend
     restart: always
     volumes:
       - static_value:/backend_static
