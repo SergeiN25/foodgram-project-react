@@ -14,17 +14,22 @@ Postgres
 `git@github.com:SergeiN25/foodgram-project-react.git`
 
 * Установите на сервере Docker, Docker Compose:
-`sudo apt install docker.io`
-`sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose`
-`sudo apt-get install docker-compose-plugin`
+```
+sudo apt install docker.io
+sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo apt-get install docker-compose-plugin
+```
 
 * Локально отредактируйте файл infra/nginx.conf и в строке server_name впишите свой IP
 
 * Скопируйте файлы docker-compose.yml и nginx.conf из директории infra на сервер:
-`scp docker-compose.yml <username>@<host>:/home/<username>/docker-compose.yml`
-`scp nginx.conf <username>@<host>:/home/<username>/nginx.conf`
+```
+scp docker-compose.yml <username>@<host>:/home/<username>/docker-compose.yml
+scp nginx.conf <username>@<host>:/home/<username>/nginx.conf
+```
 
 * Cоздайте .env файл и впишите:
+```
     DB_ENGINE=django.db.backends.postgresql
     DB_NAME=<имя базы данных postgres>
     DB_USER=<пользователь бд>
@@ -32,16 +37,17 @@ Postgres
     DB_HOST=db
     DB_PORT=5432
     SECRET_KEY=<секретный ключ проекта django>
-
+```
 * На сервере соберите docker-compose:
 `sudo docker-compose up -d --build`
 
 * После успешной сборки на сервере выполните команды (только после первого деплоя)
-`sudo docker-compose exec backend python manage.py migrate`
-`sudo docker-compose exec backend python manage.py collectstatic`
-`sudo docker compose -f docker-compose.yml exec backend cp -r /app/static/. /backend_static/static/`
-`sudo docker-compose exec backend python manage.py load_ingredients <Название файла из директории data>`
-
+```
+sudo docker-compose exec backend python manage.py migrate
+sudo docker-compose exec backend python manage.py collectstatic
+sudo docker compose -f docker-compose.yml exec backend cp -r /app/static/. /backend_static/static/
+sudo docker-compose exec backend python manage.py load_ingredients <Название файла из директории data>
+```
 * Для работы с Workflow добавьте в Secrets GitHub переменные окружения для работы
 
 ## Примеры запросов:
@@ -66,6 +72,7 @@ Request:
   "cooking_time": 1
 }
 ```
+
 Response:
 ```
 {
