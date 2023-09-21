@@ -93,13 +93,6 @@ jobs:
             echo DB_HOST=${{ secrets.DB_HOST }} >> .env
             echo DB_PORT=${{ secrets.DB_PORT }} >> .env
             echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
-            sudo docker-compose up -d
-            sudo docker compose exec backend python manage.py makemigrations users
-            sudo docker compose exec backend python manage.py makemigrations recipes
-            sudo docker compose exec backend python manage.py migrate
-            sudo docker compose exec backend python manage.py collectstatic
-            sudo docker compose exec backend cp -r /app/collected_static/. /backend_static/static/
-            sudo docker-compose exec backend python manage.py load_ingredients ingredients.json
 
   telegram_message:
     name: Send telegram message
