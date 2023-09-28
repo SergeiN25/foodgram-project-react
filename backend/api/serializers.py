@@ -211,3 +211,28 @@ class FollowSerializer(serializers.ModelSerializer):
                 'Вы уже подписаны на данного пользователя')
 
         return data
+
+
+class SubscribeCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Follow
+        fields = ('user', 'author')
+
+    def validate(self, data):
+        user = self.context['request'].user
+        author = data['author']
+        if user == author:
+            raise serializers.ValidationError({
+                'errors': 'Ты не можешь подписаться на себя.'
+            })
+        if user.follower.filter(author=author).exists():
+            raise serializers.ValidationError({
+                'errors': 'Уже подписан.'
+            })
+        return data
+
+    def to_representation(self, instance):
+        return FollowSerializer(
+            instance.author,
+            context={'request': self.context.get('request')}
+        ).data

@@ -6,7 +6,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY'),
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['158.160.70.244', '127.0.0.1', 'localhost', 'foodgramsn.ddns.net']
 
 INSTALLED_APPS = [
     'api',

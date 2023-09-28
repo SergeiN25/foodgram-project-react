@@ -14,8 +14,9 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from api.filters import AuthorAndTagFilter, IngredientSearchFilter
 from api.pagination import LimitPageNumberPagination
 from api.permissions import IsOwnerOrReadOnly
-from api.serializers import (FollowSerializer, IngredientSerializer,
-                             RecipeSerializer, TagSerializer)
+from api.serializers import (IngredientSerializer, CustomUserCreateSerializer,
+                             CustomUserSerializer, RecipeSerializer,
+                             SubscribeCreateSerializer, TagSerializer)
 from recipes.models import (Cart, Favorite, Ingredient, IngredientAmount,
                             Recipe, Tag)
 from users.models import Follow, User
@@ -105,32 +106,43 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 class CustomUserViewSet(UserViewSet):
+    queryset = User.objects.all()
     pagination_class = LimitPageNumberPagination
+    permission_classes = (IsOwnerOrReadOnly,)
 
-    @action(detail=True, permission_classes=[IsAuthenticated])
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return CustomUserCreateSerializer
+        return CustomUserSerializer
+
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=[IsAuthenticated, ],
+        url_path='subscribe'
+    )
     def subscribe(self, request, id=None):
         author = get_object_or_404(User, id=id)
+        user = request.user
+        if request.method == 'POST':
+            serializer = SubscribeCreateSerializer(
+                data={
+                    'user': user.id,
+                    'author': author.id
+                },
+                context={'request': request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        serializer = FollowSerializer(
-            data={'user': request.user.id, 'author': author.id})
-        serializer.is_valid(raise_exception=True)
-        follow = serializer.save()
-        return Response(FollowSerializer(
-            follow, context={'request': request}).data,
-            status=status.HTTP_201_CREATED)
-
-    @subscribe.mapping.delete
-    def delete_subscribe(self, request, id=None):
-        get_object_or_404(Follow, user=request.user, author_id=id).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @action(detail=False, permission_classes=[IsAuthenticated])
-    def subscriptions(self, request):
-        queryset = request.user.following.all()
-        pages = self.paginate_queryset(queryset)
-        serializer = FollowSerializer(
-            pages,
-            many=True,
-            context={'request': request}
-        )
-        return self.get_paginated_response(serializer.data)
+        if request.method == 'DELETE':
+            subscription = user.follower.filter(author=author)
+            if subscription.exists():
+                subscription.delete()
+                return Response(
+                    {'message': 'Вы больше не подписаны на пользователя'},
+                    status=status.HTTP_204_NO_CONTENT)
+            return Response(
+                {'errors': 'Вы не подписаны на этого пользователя!'},
+                status=status.HTTP_400_BAD_REQUEST)
